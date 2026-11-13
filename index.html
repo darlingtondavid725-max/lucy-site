@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucy</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; color:#f3e9ea; font-family: system-ui, sans-serif; display:flex; justify-content:center; align-items:center;
+         background: linear-gradient(rgba(8,2,4,.72), rgba(8,2,4,.86)), url('/logo.png') center top / cover no-repeat fixed #0b0306; }
+  .wrap { width:100%; max-width:440px; margin:20px; padding:22px; border-radius:20px; background:rgba(14,4,7,.62);
+          backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border:1px solid rgba(255,40,60,.28); box-shadow:0 0 50px rgba(190,0,20,.35); }
+  .brand { text-align:center; font-size:44px; font-weight:800; letter-spacing:6px; color:#ff2b3f; text-shadow:0 0 18px rgba(255,30,50,.7); margin:0 0 4px; }
+  h1 { margin:10px 0 4px; font-size:21px; text-align:center; }
+  p.sub { margin:0 0 18px; color:#d9b8bc; text-align:center; }
+  label { display:block; margin:14px 0 6px; font-size:14px; color:#e8cfd2; }
+  input[type=tel] { width:100%; padding:14px; border-radius:12px; border:1px solid #5a1d25; background:rgba(26,10,14,.8); color:#fff; font-size:17px; }
+  .check { display:flex; gap:10px; align-items:flex-start; margin:14px 0; font-size:14px; color:#e8cfd2; }
+  .check input { margin-top:3px; }
+  button { width:100%; padding:15px; border:0; border-radius:12px; background:#c1121f; color:#fff; font-size:17px; font-weight:600; }
+  button:disabled { opacity:.5; }
+  #result { margin-top:18px; padding:16px; border-radius:12px; background:rgba(26,10,14,.8); border:1px solid #5a1d25; display:none; text-align:center; }
+  #code { font-size:34px; letter-spacing:6px; font-weight:700; margin:8px 0; }
+  .err { color:#ff8b94; }
+  small { display:block; margin-top:16px; color:#9b7b80; line-height:1.4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">LUCY</div>
+  <h1>Link your WhatsApp to Lucy</h1>
+  <p class="sub">Enter your number to get a pairing code.</p>
+  <label for="num">WhatsApp number with country code, no + (example: 2348012345678)</label>
+  <input id="num" type="tel" inputmode="numeric" placeholder="2348012345678" autocomplete="off">
+  <button id="go">Get my pairing code</button>
+  <div id="result"></div>
+  <small>
+    How to use the code: open WhatsApp, go to Settings, then Linked devices, then Link a device, then "Link with phone number instead", and type the code.<br><br>
+    By linking, your number will follow Lucy's two WhatsApp channels. You can unfollow them any time.<br><br>
+    This is an unofficial bot. WhatsApp can limit or ban numbers that use bots, so use a number you can afford to risk. You can unlink at any time in Linked devices.
+  </small>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+$('go').onclick = async () => {
+  const number = $('num').value.replace(/\D/g, '');
+  const box = $('result');
+  box.style.display = 'block';
+  if (number.length < 8 || number.length > 15) { box.innerHTML = '<span class="err">Enter your full number with country code.</span>'; return; }
+  $('go').disabled = true; box.textContent = 'Getting your code...';
+  try {
+    const r = await fetch('/api/pair?number=' + number);
+    const d = await r.json();
+    if (d.pairingCode) {
+      box.innerHTML = 'Your pairing code:<div id="code"></div>Enter it in WhatsApp within a minute.';
+      $('code').textContent = d.pairingCode;
+    } else {
+      box.innerHTML = '<span class="err"></span>';
+      box.firstChild.textContent = d.error || 'Something went wrong. Try again in a minute.';
+    }
+  } catch (e) { box.innerHTML = '<span class="err">Could not reach the server. Try again.</span>'; }
+  $('go').disabled = false;
+};
+</script>
+</body>
+</html>

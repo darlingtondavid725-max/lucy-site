@@ -22,6 +22,9 @@
   button:disabled { opacity:.5; }
   #result { margin-top:18px; padding:16px; border-radius:12px; background:rgba(26,10,14,.8); border:1px solid #5a1d25; display:none; text-align:center; }
   #code { font-size:34px; letter-spacing:6px; font-weight:700; margin:8px 0; }
+  .copyRow { display:flex; align-items:center; justify-content:center; gap:10px; margin:8px 0; }
+  #copyBtn { width:auto; padding:8px 16px; font-size:14px; font-weight:600; background:#2a0f14; border:1px solid #c1121f; color:#fff; border-radius:10px; }
+  #copyBtn.copied { background:#1f7a3d; border-color:#1f7a3d; }
   .err { color:#ff8b94; }
   small { display:block; margin-top:16px; color:#9b7b80; line-height:1.4; }
 </style>
@@ -53,8 +56,24 @@ $('go').onclick = async () => {
     const r = await fetch('/api/pair?number=' + number);
     const d = await r.json();
     if (d.pairingCode) {
-      box.innerHTML = 'Your pairing code:<div id="code"></div>Enter it in WhatsApp within a minute.';
+      box.innerHTML = 'Your pairing code:'
+        + '<div class="copyRow"><div id="code"></div><button id="copyBtn" type="button">Copy</button></div>'
+        + 'Enter it in WhatsApp within a minute.';
       $('code').textContent = d.pairingCode;
+      $('copyBtn').onclick = async () => {
+        const raw = d.pairingCode.replace(/-/g, '');
+        try {
+          await navigator.clipboard.writeText(raw);
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = raw; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          document.body.removeChild(ta);
+        }
+        $('copyBtn').textContent = 'Copied!'; $('copyBtn').classList.add('copied');
+        setTimeout(() => { $('copyBtn').textContent = 'Copy'; $('copyBtn').classList.remove('copied'); }, 2000);
+      };
     } else {
       box.innerHTML = '<span class="err"></span>';
       box.firstChild.textContent = d.error || 'Something went wrong. Try again in a minute.';
@@ -64,4 +83,5 @@ $('go').onclick = async () => {
 };
 </script>
 </body>
-</html>
+  </html>
+  
